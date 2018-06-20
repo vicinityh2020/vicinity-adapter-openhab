@@ -1,5 +1,7 @@
 package org.openhab.binding.vicinityadapter.internal;
 
+import java.util.ArrayList;
+
 /**
  * Copyright (c) 2014,2018 Contributors to the Eclipse Foundation
  *
@@ -15,6 +17,7 @@ package org.openhab.binding.vicinityadapter.internal;
 
 import java.util.Collection;
 import java.util.Locale;
+import java.util.stream.Collectors;
 
 import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.Consumes;
@@ -54,10 +57,8 @@ import org.osgi.service.component.annotations.ReferencePolicy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -122,31 +123,28 @@ public class VICINITYadapterAPI implements RESTResource {
 
         final Locale locale = LocaleUtil.getLocale(language);
 
-        // Collection<Item> items = getItems(type, tags);
-        Collection<Item> items = getItems(null, "vicinity");
-        VICINITYobject lightbulb = new VICINITYobject(items);
+        // construct response...
+        JsonObject response = new JsonObject();
 
-        String json = new Gson().toJson(lightbulb);
+        // add adapter-id...
+        response.addProperty("adapter-id", "my-openhab-adapter");
 
-        JsonParser parser = new JsonParser();
-        JsonArray td = (JsonArray) parser.parse(lightbulb.generateTD());
+        // get all VICINITY objects. Each Item of the same object, has to be in the same itemgroup.
+        // hence all vcnt itemgroups equal all vcnt objects!
+        ArrayList<String> vcntGroups = getItemGroups();
 
-        // JsonArray td = Json.createArrayBuilder().add(Json.createObjectBuilder().add("type", "Lightbulb")
-        // .add("oid", "bulbx").add("name", "my fancy lightbulb")
-        // .add("properties", Json.createArrayBuilder().add(Json.createObjectBuilder().add("pid", "brightness")
-        // .add("monitors", "Luminance")
-        // .add("output", Json.createObjectBuilder().add("units", "percent").add("datatype", "int"))
-        // .add("writeable", "yes")
-        // .add("read_links",
-        // Json.createObjectBuilder().add("href", "properties/brightness").add("mediaType",
-        // "application/json"))
-        // .add("write_links", Json.createObjectBuilder().add("href", "properties/brightness")
-        // .add("mediaType", "application/json")))))
-        // .build();
+        JsonArray td = new JsonArray();
+        // TODO: right now, we iterate over all items twice... reduce to one iteration!
+        // for "getAll", we need to construct all available VICINITY objects
+        for (String group : vcntGroups) {
+            ArrayList<Item> groupitems = getAllItemsOfGroup(group);
+            VICINITYobject obj = new VICINITYobject(group, groupitems);
+            td.add(obj.getTDasJSON());
+        }
 
-        // buildStatusObject("huehue-item", "jojojo", "geile message");
+        response.add("thing-descriptions", td);
 
-        return JSONResponse.createResponse(Status.OK, td, "");
+        return JSONResponse.createResponse(Status.OK, response, "");
 
         // return Response.ok(new Stream2JSONInputStream(items.stream())).build();
     }
@@ -226,14 +224,6 @@ public class VICINITYadapterAPI implements RESTResource {
         }
     }
 
-    private JsonObject buildStatusObject(String itemName, String status, @Nullable String message) {
-        JsonObject jo = new JsonObject();
-        jo.addProperty("name", itemName);
-        jo.addProperty("status", status);
-        jo.addProperty("message", message);
-        return jo;
-    }
-
     /**
      * helper: Response to be sent to client if a Thing cannot be found
      *
@@ -283,6 +273,35 @@ public class VICINITYadapterAPI implements RESTResource {
                 items = itemRegistry.getItemsByTag(tagList);
             } else {
                 items = itemRegistry.getItemsByTagAndType(type, tagList);
+            }
+        }
+
+        return items;
+    }
+
+    private ArrayList<String> getItemGroups() {
+        ArrayList<String> groups = new ArrayList<String>();
+
+        // collect all vcnt* groups
+        for (Item item : itemRegistry.getAll()) {
+            for (String group : item.getGroupNames()) {
+                if (group.startsWith("vcnt")) {
+                    groups.add(group);
+                }
+            }
+        }
+
+        // now we have all available groups, relevant for VICINITY. Remove dublicates
+        return new ArrayList<String>(groups.stream().distinct().collect(Collectors.toList()));
+    }
+
+    private ArrayList<Item> getAllItemsOfGroup(String groupname) {
+        ArrayList<Item> items = new ArrayList<Item>();
+
+        // collect respective items
+        for (Item item : itemRegistry.getAll()) {
+            if (item.getGroupNames().contains(groupname)) {
+                items.add(item);
             }
         }
 
