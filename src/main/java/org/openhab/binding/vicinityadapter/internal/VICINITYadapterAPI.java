@@ -163,8 +163,7 @@ public class VICINITYadapterAPI implements RESTResource {
             @PathParam("property") @ApiParam(value = "property", required = true) String property) {
         final Locale locale = LocaleUtil.getLocale(language);
 
-        Collection<Item> items = getItems(null, "vicinity," + itemname + "," + property);
-        Item item = items.iterator().next();
+        Item item = getItem(property);
 
         // if it exists
         if (item != null) {
@@ -196,8 +195,7 @@ public class VICINITYadapterAPI implements RESTResource {
             @ApiParam(value = "valid item state (e.g. ON, OFF)", required = true) JsonObject value) {
         final Locale locale = LocaleUtil.getLocale(language);
 
-        Collection<Item> items = getItems(null, "vicinity," + itemname + "," + property);
-        Item item = items.iterator().next();
+        Item item = getItem(property);
 
         String requestvalue = value.get("value").getAsString();
 

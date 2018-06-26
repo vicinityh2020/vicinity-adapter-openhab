@@ -29,7 +29,7 @@ public class VICINITYobject {
 
         // object information
         JsonObject td = new JsonObject();
-        td.addProperty("type", "Lightbulb");
+        td.addProperty("type", "adapters:Lightbulb");
         td.addProperty("oid", itemName);
         td.addProperty("name", itemName);
         td.addProperty("version", "0.0.1");
@@ -74,6 +74,8 @@ public class VICINITYobject {
 
         // add all properties to TD
         td.add("properties", props);
+        td.add("actions", new JsonArray());
+        td.add("events", new JsonArray());
 
         return td;
     }
