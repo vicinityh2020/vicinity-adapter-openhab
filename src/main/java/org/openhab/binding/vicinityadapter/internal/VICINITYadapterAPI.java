@@ -45,7 +45,8 @@ import org.eclipse.smarthome.core.items.events.ItemEventFactory;
 import org.eclipse.smarthome.core.types.Command;
 import org.eclipse.smarthome.core.types.TypeParser;
 import org.eclipse.smarthome.io.rest.JSONResponse;
-import org.eclipse.smarthome.io.rest.LocaleUtil;
+//import org.eclipse.smarthome.io.rest.LocaleUtil;
+import org.eclipse.smarthome.io.rest.LocaleService;
 import org.eclipse.smarthome.io.rest.RESTResource;
 import org.eclipse.smarthome.io.rest.core.config.ConfigurationService;
 import org.eclipse.smarthome.io.rest.core.item.EnrichedItemDTOMapper;
@@ -95,6 +96,8 @@ public class VICINITYadapterAPI implements RESTResource {
     @NonNullByDefault({})
     private EventPublisher eventPublisher;
 
+    private LocaleService localeService;
+
     @Reference(cardinality = ReferenceCardinality.OPTIONAL, policy = ReferencePolicy.DYNAMIC)
     protected void setItemRegistry(ItemRegistry itemRegistry) {
         this.itemRegistry = itemRegistry;
@@ -113,6 +116,15 @@ public class VICINITYadapterAPI implements RESTResource {
         this.eventPublisher = null;
     }
 
+    @Reference(cardinality = ReferenceCardinality.OPTIONAL, policy = ReferencePolicy.DYNAMIC)
+    protected void setLocaleService(LocaleService localeService) {
+        this.localeService = localeService;
+    }
+
+    protected void unsetLocaleService(LocaleService localeService) {
+        this.localeService = null;
+    }
+
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     // @ApiOperation(value = "Get all objects.")
@@ -121,7 +133,7 @@ public class VICINITYadapterAPI implements RESTResource {
     public Response getAll(
             @HeaderParam(HttpHeaders.ACCEPT_LANGUAGE) @ApiParam(value = "language") @Nullable String language) {
 
-        final Locale locale = LocaleUtil.getLocale(language);
+        final Locale locale = localeService.getLocale(language);
 
         // construct response...
         JsonObject response = new JsonObject();
@@ -161,11 +173,11 @@ public class VICINITYadapterAPI implements RESTResource {
             @HeaderParam(HttpHeaders.ACCEPT_LANGUAGE) @ApiParam(value = "language") String language,
             @PathParam("itemname") @ApiParam(value = "item name", required = true) String itemname,
             @PathParam("property") @ApiParam(value = "property", required = true) String property) {
-        final Locale locale = LocaleUtil.getLocale(language);
+        final Locale locale = localeService.getLocale(language);
 
         Item item = getItem(property);
 
-        // if it exists
+        // if it existscd
         if (item != null) {
             logger.debug("Received HTTP GET request at '{}'.", uriInfo.getPath());
 
@@ -193,11 +205,13 @@ public class VICINITYadapterAPI implements RESTResource {
             @PathParam("itemname") @ApiParam(value = "item name", required = true) String itemname,
             @PathParam("property") @ApiParam(value = "property", required = true) String property,
             @ApiParam(value = "valid item state (e.g. ON, OFF)", required = true) JsonObject value) {
-        final Locale locale = LocaleUtil.getLocale(language);
+        final Locale locale = localeService.getLocale(language);
 
         Item item = getItem(property);
 
         String requestvalue = value.get("value").getAsString();
+
+        JsonObject object = new JsonObject();
 
         // if Item exists
         if (item != null) {
@@ -208,17 +222,23 @@ public class VICINITYadapterAPI implements RESTResource {
                 // set State and report OK
                 logger.debug("Received HTTP PUT request at '{}' with value '{}'.", uriInfo.getPath(), value);
                 eventPublisher.post(ItemEventFactory.createCommandEvent(item.getName(), command));
-                return getItemResponse(Status.ACCEPTED, null, locale, null);
+                object.addProperty("success", "true");
+                return JSONResponse.createResponse(Status.OK, object, null);
+                // return getItemResponse(Status.ACCEPTED, null, locale, null);
             } else {
                 // State could not be parsed
                 logger.warn("Received HTTP PUT request at '{}' with an invalid status value '{}'.", uriInfo.getPath(),
                         value);
-                return JSONResponse.createErrorResponse(Status.BAD_REQUEST, "State could not be parsed: " + value);
+                object.addProperty("success", "false");
+                return JSONResponse.createResponse(Status.BAD_REQUEST, object, null);
+                // return JSONResponse.createErrorResponse(Status.BAD_REQUEST, "State could not be parsed: " + value);
             }
         } else {
             // Item does not exist
             logger.info("Received HTTP PUT request at '{}' for the unknown item '{}'.", uriInfo.getPath(), itemname);
-            return getItemNotFoundResponse(itemname);
+            object.addProperty("success", "false");
+            return JSONResponse.createResponse(Status.NOT_FOUND, object, null);
+            // return getItemNotFoundResponse(itemname);
         }
     }
 

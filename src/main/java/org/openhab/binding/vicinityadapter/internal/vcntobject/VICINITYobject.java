@@ -68,6 +68,9 @@ public class VICINITYobject {
             // read link:
             prop.add("read_link", constructReadLink());
 
+            // write link:
+            prop.add("write_link", constructWriteLink());
+
             // append to properties
             props.add(prop);
         }
@@ -86,7 +89,7 @@ public class VICINITYobject {
         JsonObject readLink = new JsonObject();
 
         // hard coded read link. always use oid and pid options
-        readLink.addProperty("href", "/objects/{oid}/properties/{pid}");
+        readLink.addProperty("href", "/objects/" + itemName + "/properties/{pid}");
 
         JsonObject output = new JsonObject();
 
@@ -110,5 +113,57 @@ public class VICINITYobject {
         readLink.add("output", output);
 
         return readLink;
+    }
+
+    private JsonObject constructWriteLink() {
+        // not claiming that this is nice... also it is very much hard-coded for now... just proove of concept and it
+        // works :)
+        JsonObject writeLink = new JsonObject();
+
+        // hard coded read link. always use oid and pid options
+        writeLink.addProperty("href", "/objects/" + itemName + "/properties/{pid}");
+
+        JsonObject input = new JsonObject();
+
+        JsonArray fields_in = new JsonArray();
+
+        JsonObject field_in = new JsonObject();
+        field_in.addProperty("name", "value");
+
+        JsonObject schema_in = new JsonObject();
+        schema_in.addProperty("units", "percent");
+        schema_in.addProperty("type", "integer");
+
+        field_in.add("schema", schema_in);
+
+        fields_in.add(field_in);
+
+        input.add("field", fields_in);
+
+        input.addProperty("type", "object");
+
+        writeLink.add("input", input);
+
+        JsonObject output = new JsonObject();
+
+        JsonArray fields_out = new JsonArray();
+
+        JsonObject field_out = new JsonObject();
+        field_out.addProperty("name", "success");
+
+        JsonObject schema_out = new JsonObject();
+        schema_out.addProperty("type", "boolean");
+
+        field_out.add("schema", schema_out);
+
+        fields_out.add(field_out);
+
+        output.add("field", fields_out);
+
+        output.addProperty("type", "object");
+
+        writeLink.add("output", output);
+
+        return writeLink;
     }
 }
