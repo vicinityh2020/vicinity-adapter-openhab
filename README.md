@@ -14,11 +14,38 @@ The abstraction and the concept of _Items_ maps onto the VICINITY infrastructure
 In its current implementation, this adapter interprets every _Item_ as potential VICINITY object property or action. As _Items_ can be grouped in openHAB, this adapter relies on Item groups and Item Tags to identify which object should be exposed and to which VICINITY object it belongs. See _Item Configuration_ for more details.
 
 
-## Adapter Deployment
-The VICINITY adapter for openHAB is implemented as an ordinary openHAB Binding. It can used just as any other Binding.
+## Adapter Deployment in Development Environment
+The VICINITY adapter for openHAB is implemented as an ordinary openHAB Binding. It can be used just as any other Binding.
 Follow the Instructions provided by openHAB, set up your IDE and openHAB installation accordingly: [openHAB IDE Setup](https://www.openhab.org/docs/developer/development/ide.html)
 
-After setting up your IDE, clone and import this repository as existing project into your IDE. Finally, update the runtime configuration to build and include this VICINITY adapter as well.
+After setting up your IDE this repository is supposed to be cloned as
+```
+<your IDE root>/openhab2-addons/addons/binding/org.openhab.binding.vicinityadapter
+```
+From there it can be importe as existing project into your IDE. Finally, update the runtime configuration to build and include this VICINITY adapter as well.
+
+
+## Adapter Deployment on Standalone Device (e.g. RaspberryPi)
+The VICINITY adapter for openHAB is implemented as an ordinary openHAB Binding. It can be used just as any other Binding.
+Follow the Instructions provided by openHAB to set up your openHAB Device, depending on your Hardware Platform: [openHAB Installation](https://www.openhab.org/docs/installation/#platform-recommendations)
+
+Afterwards, the binding .jar should be placed into openHAB's addon folder. E.g. for Debian Package-based Installation at:
+```
+/usr/share/openhab2/addons/
+e.g.
+/usr/share/openhab2/addons/org.openhab.binding.vicinityadapter-2.4.0-SNAPSHOT.jar
+```
+
+OpenHAB should dynamically load new addons. Otherwise, the binding needs to be enabled manually, via command-line:
+```
+# openhab-cli console
+(log in as openhab:habopen)
+openhab> bundle:list
+(find the ID of the VICINITY Adapter, e.g.)
+180 │ Active   │  80 │ 2.4.0.201809051336     │ VICINITYadapter Binding
+(in case the bundle is not yet loaded and active, start the bundle)
+openhab> bundle:start <id of VICINITY adapter)
+```
 
 
 ## Item configuration
