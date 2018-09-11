@@ -40,11 +40,14 @@ OpenHAB should dynamically load new addons. Otherwise, the binding needs to be e
 ```
 # openhab-cli console
 (log in as openhab:habopen)
+
 openhab> bundle:list
 (find the ID of the VICINITY Adapter, e.g.)
+
 180 │ Active   │  80 │ 2.4.0.201809051336     │ VICINITYadapter Binding
 (in case the bundle is not yet loaded and active, start the bundle)
-openhab> bundle:start <id of VICINITY adapter)
+
+openhab> bundle:start <id of VICINITY adapter. 180 in the above example>
 ```
 
 
